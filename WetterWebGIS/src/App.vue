@@ -5,7 +5,7 @@
 
     const state = reactive(
     {
-        message: "Click a place to display it's coordinates",
+        message: "Koordinate per Klick bestimmen",
         x: 0,
         y: 0
     })

@@ -12,8 +12,12 @@
 <template>
     <div class="coordinates-component">
         <h1 class="text"> {{msg}} </h1>
-        <p class = "text"> latitude:    &nbsp;&nbsp;  &nbsp;&nbsp;&nbsp;      {{x}} </p>
-        <p class = "text"> longitude:   &nbsp;&nbsp;                          {{y}} </p>
+        <p class = "text">
+            latitude:  &nbsp;&nbsp;    {{x}}
+        </p>
+        <p class = "text">
+            longitude: &nbsp;          {{y}}
+        </p>
     </div>
 </template>
 
@@ -29,6 +33,7 @@
 
 .text {
     color: black;
+    font-family: "Courier New";
 }
 
 </style>
