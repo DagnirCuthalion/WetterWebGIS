@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@arcgis/core": "^4.24.7",
+    "opencage-api-client": "^1.0.0",
     "vue": "^3.2.38"
   },
   "devDependencies": {

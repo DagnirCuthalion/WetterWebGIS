@@ -1,37 +1,27 @@
 <script setup>
     import CoordinatesComponent from './components/coordinates-component.vue'
-
+    import WeatherComponent from './components/weather-component.vue'
+    console.log("importing esri");
+    import esriConfig from "@arcgis/core/config";
+    import Map from "@arcgis/core/Map";
+    import MapView from "@arcgis/core/views/MapView";
+    import FeatureLayer from "@arcgis/core/layers/FeatureLayer"
     import { reactive } from 'vue'
 
-    const state = reactive(
+    var reverse_geocode_api_key = "1f5aa7d5392b4351aeaa6d83eadf550e";
+    var reverse_geocode_api_url = 'https://api.opencagedata.com/geocode/v1/json'
+
+    var weather_api_key = "6b904086651c872d0e2c58c1529d2dcb"
+    var weather_api_url = "https://api.openweathermap.org/data/2.5/forecast"
+
+    let state = reactive(
     {
         message: "Koordinate per Klick bestimmen",
         x: 0,
-        y: 0
+        y: 0,
+        ort: "unbekannt",
+        vorhersage: "unbekannt"
     })
-
-
-    function setMsg(msg)
-    {
-        state.message  = msg
-    }
-
-    function setCoordinates(lat, lon)
-    {
-        state.x=lat
-        state.y=lon
-        console.log(state)
-    }
-
-
-    console.log("importing esri");
-
-    import MapView from "@arcgis/core/views/MapView";
-    import Map from "@arcgis/core/Map";
-    import esriConfig from "@arcgis/core/config";
-    import FeatureLayer from "@arcgis/core/layers/FeatureLayer"
-
-    esriConfig.apiKey = "AAPK8edb7de7286343e6a15a84849941c65bIx4YtpaCmxgMNcnWe-tkxXuJTVpNslsh7dt5HSDP4XQF3AwU69V_SRt1ZGnXRPXD";
 
     const map = new Map({
         basemap: "dark-gray-vector" // Basemap layer service
@@ -43,18 +33,6 @@
         zoom: 13, // Zoom level
         container: "viewDiv" // Div element
     });
-
-    view.popup.autoOpenEnabled = false;
-    view.on("click", (event) => {
-        // Get the coordinates of the click on the view
-        // around the decimals to 3 decimals
-        const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
-        const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
-
-        setMsg("Getroffene Koordinate");
-        setCoordinates(lat, lon);
-    });
-
 
     const proportionalSymbolRenderer = {
         type: "simple",  // autocasts as new SimpleRenderer()
@@ -87,17 +65,248 @@
         renderer: proportionalSymbolRenderer
     });
 
-    map.add(worldCitiesLayer);
+    function main()
+    {
+        setUpArcGIS()
+        setUpComponents()
+    }
+
+    function setUpArcGIS()
+    {
+        setUpConfig()
+        var map = setUpMap()
+        setUpMapView(map)
+        var worldCitiesLayer = setUpFeatureLayer()
+        map.add(worldCitiesLayer);
+        console.log("done with esri");
+    }
+
+    function setUpConfig()
+    {
+        esriConfig.apiKey = "AAPK8edb7de7286343e6a15a84849941c65bIx4YtpaCmxgMNcnWe-tkxXuJTVpNslsh7dt5HSDP4XQF3AwU69V_SRt1ZGnXRPXD";
+    }
+
+    function setUpMap()
+    {
+        const map = new Map({
+            basemap: "dark-gray-vector" // Basemap layer service
+        });
+        return map;
+    }
+
+    function setUpMapView(map)
+    {
+        var view = createMapView(map)
+        setOnClickListener(view)
+    }
+
+    function createMapView(map)
+    {
+        const view = new MapView({
+            map: map,
+            center: [-118.805, 34.027], // Longitude, latitude
+            zoom: 13, // Zoom level
+            container: "viewDiv" // Div element
+        });
+        return view;
+    }
+
+    function setOnClickListener(view)
+    {
+        view.on("click", (event) => {
+            // Get the coordinates of the click on the view
+            // around the decimals to 3 decimals
+            const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+            const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+            handleSubcomponents(lat, lon)
+        });
+    }
+
+    function setUpFeatureLayer()
+    {
+        var proportionalSymbolRenderer = createProportionalSymbolRenderer()
+        var featureLayer = createFeatureLayer(proportionalSymbolRenderer)
+        return featureLayer
+    }
+
+    function createFeatureLayer(proportionalSymbolRenderer)
+    {
+        const worldCitiesLayer = new FeatureLayer({
+            url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Cities/FeatureServer/0",
+            renderer: proportionalSymbolRenderer
+        });
+        return worldCitiesLayer
+    }
+
+    function createProportionalSymbolRenderer()
+    {
+        const proportionalSymbolRenderer = {
+            type: "simple",  // autocasts as new SimpleRenderer()
+            symbol:
+            {
+                type: "simple-marker",  // autocasts as new SimpleFillSymbol()
+                color: "#800000",
+                outline: {  // autocasts as new SimpleLineSymbol()
+                      width: 1,
+                      color: "white"
+                    }
+            },
+
+            visualVariables:
+            [
+                {
+                    type: "size",
+                    field: "POP",
+                    stops:
+                    [
+                        { value: 0, size: 3 },
+                        { value: 26121000, size: 90 }
+                    ]
+                }
+            ]
+        }
+        return proportionalSymbolRenderer
+    }
+
+    function handleSubcomponents(lat,lon)
+        {
+            setMsg("Getroffene Koordinate")
+            setCoordinates(lat, lon)
+            makeReverseGeocodeRequest()
+            makeWeatherRequest()
+        }
+
+    function setMsg(msg)
+    {
+        state.message  = msg
+    }
+
+    function setCoordinates(lat, lon)
+    {
+        state.x=lat
+        state.y=lon
+    }
+
+    function setUpComponents()
+    {
+
+        console.log('placeholder')
+
+    }
+
+    function makeReverseGeocodeRequest()
+    {
+        var request_url = createReverseGeocodeURL()
+
+        var request = new XMLHttpRequest();
+        request.open('GET', request_url, true);
+
+        request.onload = function() {
+
+        if (request.status === 200){
+          // Success!
+          var data = JSON.parse(request.responseText);
+
+          state.ort = data.results[0].components.city
+
+          alert(data.results[0].formatted); // print the location
+
+        } else if (request.status <= 500){
+          // We reached our target server, but it returned an error
+
+          console.log("unable to geocode! Response code: " + request.status);
+          var data = JSON.parse(request.responseText);
+          console.log('error msg: ' + data.status.message);
+        } else {
+          console.log("server error");
+        }
+        };
+
+        request.onerror = function() {
+        // There was a connection error of some sort
+        console.log("unable to connect to server");
+        };
+
+        request.send();  // make the request
+    }
+
+    function createReverseGeocodeURL()
+    {
+        return reverse_geocode_api_url
+           + '?'
+           + 'key=' + reverse_geocode_api_key
+           + '&q=' + encodeURIComponent(state.x + ',' + state.y)
+           + '&pretty=1'
+           + '&no_annotations=1';
+    }
+
+    function makeWeatherRequest()
+    {
+
+        var request_url = createWeatherURL()
+        console.log(request_url)
+
+        var request = new XMLHttpRequest();
+        request.open('GET', request_url, true);
+
+        request.onload = function() {
+
+        if (request.status === 200){
+          // Success!
+
+          console.log(request);
+          var data = JSON.parse(request.responseText);
+
+          state.vorhersage = data.list[0].dt_txt + ": " + data.list[0].weather[0].description
+
+        } else if (request.status <= 500){
+          // We reached our target server, but it returned an error
+
+          console.log("unable to weather! Response code: " + request.status);
+          var data = JSON.parse(request.responseText);
+          console.log('error msg: ' + data.status.message);
+        } else {
+          console.log("server error");
+        }
+        };
+
+        request.onerror = function() {
+        // There was a connection error of some sort
+        console.log("unable to connect to server");
+        };
+
+        request.send();  // make the request
+
+    }
+
+    function createWeatherURL()
+    {
+        return weather_api_url
+            + '?'
+            + 'lat=' + encodeURIComponent(state.x)
+            + '&lon=' + encodeURIComponent(state.y)
+            + '&appid=' + encodeURIComponent(weather_api_key)
+    }
 
 
-    console.log("done with esri");
+
+    main()
 
 
 </script>
 
 <template>
 
-    <coordinates-component :msg=state.message :x=state.x :y=state.y> </coordinates-component>
+    <CoordinatesComponent :msg=state.message :x=state.x :y=state.y>
+
+    </CoordinatesComponent>
+
+
+    <WeatherComponent :x=state.x :y=state.y :ort=state.ort :vorhersage=state.vorhersage>
+
+    </WeatherComponent>
+
 
 </template>
 

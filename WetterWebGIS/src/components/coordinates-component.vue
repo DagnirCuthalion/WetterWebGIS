@@ -11,11 +11,11 @@
 
 <template>
     <div class="coordinates-component">
-        <h1 class="text"> {{msg}} </h1>
-        <p class = "text">
+        <h1 class="coordinates-text"> {{msg}} </h1>
+        <p class = "coordinates-text">
             latitude:  &nbsp;&nbsp;    {{x}}
         </p>
-        <p class = "text">
+        <p class = "coordinates-text">
             longitude: &nbsp;          {{y}}
         </p>
     </div>
@@ -27,11 +27,11 @@
     position: absolute;
     right: 7px;
     top: 7px;
-    z-index: 100;
+    z-index: 2;
     background-color: white;
 }
 
-.text {
+.coordinates-text {
     color: black;
     font-family: "Courier New";
 }
