@@ -4,8 +4,6 @@
     {
         props:
         {
-            x: Number,
-            y: Number,
             ort: String,
             vorhersage: String
         }
@@ -18,7 +16,7 @@
 
 <template>
     <div class="weather-component">
-        <h1 class="weather-text"> Wetter für {{ort}} ({{x}}/{{y}}) </h1>
+        <h1 class="weather-text"> Wetter für {{ort}}</h1>
         <p class="weather-text"> {{vorhersage}} </p>
     </div>
 </template>
