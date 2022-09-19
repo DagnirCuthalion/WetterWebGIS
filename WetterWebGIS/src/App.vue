@@ -147,8 +147,8 @@
             ort = data.results[0].address_components[LOCALITY].long_name
           else
           {
-            console.log(data.results[0].address_components[LOCALITY])
-            ort = data.results[0].address_components[LOCALITY].short_name
+            console.log(data)
+            ort = data.results[0].address_components[LOCALITY]?.short_name
           }
 
 
@@ -205,8 +205,10 @@
           // We reached our target server, but it returned an error
 
           console.log("unable to weather! Response code: " + request.status);
+          state.vorhersage = "Unknown"
         } else {
           console.log("server error");
+          state.vorhersage = "Unknown"
         }
         };
 
